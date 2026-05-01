@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCAI Agent Desktop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: #1a73e8;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background: #34a853;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #ea4335;
+            color: white;
+        }
+
+        .status-connecting {
+            background: #fbbc04;
+            color: #333;
+        }
+
+        /* Main Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 16px;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a73e8;
+        }
+
+        .card-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            min-height: 80px;
+        }
+
+        /* Transcription card spans full width */
+        .card-transcription {
+            grid-column: 1 / -1;
+        }
+
+        /* Transcription messages */
+        .message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message-new {
+            background: #e8f0fe;
+            border-left: 4px solid #1a73e8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sentiment indicator */
+        .sentiment-positive {
+            color: #34a853;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .sentiment-negative {
+            color: #ea4335;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .sentiment-neutral {
+            color: #fbbc04;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        /* Suggestions */
+        .suggestion-item {
+            background: #e8f0fe;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-left: 4px solid #1a73e8;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        /* Timestamp */
+        .timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            color: #999;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        /* Pending badge */
+        .pending {
+            display: inline-block;
+            background: #f0f2f5;
+            color: #999;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🎧 CCAI Agent Desktop</h1>
+        <span class="status-badge status-connecting" id="statusBadge">
+            ⏳ Connecting...
+        </span>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="container">
+
+        <!-- Transcription Card (full width) -->
+        <div class="card card-transcription">
+            <div class="card-header">
+                <span class="card-icon">🎤</span>
+                <span class="card-title">Live Transcription</span>
+            </div>
+            <div class="card-content" id="transcriptionContent">
+                <p class="empty-state">Waiting for conversation...</p>
+            </div>
+        </div>
+
+        <!-- Sentiment Card -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">😐</span>
+                <span class="card-title">Sentiment Analysis</span>
+            </div>
+            <div class="card-content" id="sentimentContent">
+                <p class="empty-state">No sentiment data yet...</p>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📝</span>
+                <span class="card-title">Conversation Summary</span>
+            </div>
+            <div class="card-content" id="summaryContent">
+                <p class="empty-state">Summary will appear here...</p>
+            </div>
+        </div>
+
+        <!-- AI Suggestions Card -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">💡</span>
+                <span class="card-title">AI Suggestions</span>
+            </div>
+            <div class="card-content" id="suggestionsContent">
+                <p class="empty-state">AI suggestions will appear here...</p>
+            </div>
+        </div>
+
+        <!-- Knowledge Assist Card -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📚</span>
+                <span class="card-title">Knowledge Assist</span>
+            </div>
+            <div class="card-content" id="knowledgeContent">
+                <p class="empty-state">Knowledge suggestions will appear here...</p>
+            </div>
+        </div>
+
+    </div>
+
+   <script>
+    // UI Connector SSE URL - direct connection, no auth needed
+    const UI_CONNECTOR_URL = 'https://ccai-ui-connector-svc-977761083199.asia-south1.run.app/stream';
+
+    // Get DOM elements
+    const statusBadge = document.getElementById('statusBadge');
+    const transcriptionContent = document.getElementById('transcriptionContent');
+    const sentimentContent = document.getElementById('sentimentContent');
+    const summaryContent = document.getElementById('summaryContent');
+    const suggestionsContent = document.getElementById('suggestionsContent');
+    const knowledgeContent = document.getElementById('knowledgeContent');
+
+    // Connect to SSE directly - no auth token needed
+    function connectToStream() {
+        statusBadge.className = 'status-badge status-connecting';
+        statusBadge.textContent = '⏳ Connecting...';
+
+        const eventSource = new EventSource(UI_CONNECTOR_URL);
+
+        // Connection opened
+        eventSource.onopen = () => {
+            statusBadge.className = 'status-badge status-connected';
+            statusBadge.textContent = '🟢 Connected';
+            console.log('Connected to UI Connector');
+        };
+
+        // Handle connected event
+        eventSource.addEventListener('connected', (e) => {
+            console.log('Connected event:', e.data);
+        });
+
+        // Handle conversation event
+        eventSource.addEventListener('conversation', (e) => {
+            const data = JSON.parse(e.data);
+            console.log('New conversation:', data);
+            updateUI(data);
+        });
+
+        // Handle errors
+        eventSource.onerror = (e) => {
+            console.error('SSE error:', e);
+            statusBadge.className = 'status-badge status-disconnected';
+            statusBadge.textContent = '🔴 Disconnected - Retrying...';
+            eventSource.close();
+            // Retry after 5 seconds
+            setTimeout(connectToStream, 5000);
+        };
+    }
+
+    // Update UI with new conversation data
+    function updateUI(data) {
+        // Update Transcription
+        if (data.transcription) {
+            transcriptionContent.innerHTML = `
+                <div class="message message-new">
+                    ${data.transcription}
+                </div>
+                <div class="timestamp">
+                    📅 ${data.timestamp || new Date().toLocaleString()}
+                </div>
+            `;
+        }
+
+        // Update Sentiment
+        if (data.sentiment && data.sentiment !== 'pending') {
+            const sentiment = data.sentiment.toLowerCase();
+            let sentimentClass = 'sentiment-neutral';
+            let sentimentEmoji = '😐';
+
+            if (sentiment.includes('positive')) {
+                sentimentClass = 'sentiment-positive';
+                sentimentEmoji = '😊';
+            } else if (sentiment.includes('negative')) {
+                sentimentClass = 'sentiment-negative';
+                sentimentEmoji = '😟';
+            }
+
+            sentimentContent.innerHTML = `
+                <div class="${sentimentClass}">
+                    ${sentimentEmoji} ${data.sentiment}
+                </div>
+            `;
+        }
+
+        // Update Summary
+        if (data.summary && data.summary !== 'pending') {
+            summaryContent.innerHTML = `
+                <div class="message message-new">
+                    ${data.summary}
+                </div>
+            `;
+        }
+
+        // Update AI Suggestions
+        if (data.suggestions && data.suggestions.length > 0) {
+            suggestionsContent.innerHTML = data.suggestions
+                .map(s => `<div class="suggestion-item">💡 ${s}</div>`)
+                .join('');
+        }
+    }
+
+    // Start connection when page loads
+    connectToStream();
+</script>
+
+</body>
+</html>
